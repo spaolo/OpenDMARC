@@ -90,6 +90,28 @@ Causes reports to be sent by transmitting them using SMTP to the specified
 .I port.
 The default is 25.
 .TP
+.I --smtp-starttls
+Causes reports to be sent to be sent through an encrypted SMTP channel by
+issuing a STARTTLS command.
+.TP
+.I --smtp-ssl
+Causes reports to be sent to be sent through an encrypted SMTP channel by 
+connecting to a SSL/TLS socket.
+.TP
+.I --smtp-user=username
+Used with 
+.I --smtp-pass
+Causes reports to be sent with a SMTP SASL authenticated session using 
+.I username
+as login.
+.TP
+.I --smtp-pass=password
+Used with 
+.I --smtp-user
+Causes reports to be sent with a SMTP SASL authenticated session using 
+.I password
+as password.
+.TP
 .I --utc
 Instructs the database to change to the UTC timezone when generating output.
 Otherwise, the database default is used.
