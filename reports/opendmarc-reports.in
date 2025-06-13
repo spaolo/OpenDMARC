@@ -141,6 +141,10 @@ my $repemail     = "postmaster@" . $repdom;
 
 my $smtp_server  = '127.0.0.1';
 my $smtp_port    = 25;
+my $smtp_ssl     = 0;
+my $smtp_starttls = 0;
+my $smtp_tls_verify = 1; # SSL_VERIFY_PEER
+my $smtp_tls_noverify = 0;
 my $smtp_user    = undef;
 my $smtp_pass    = undef;
 my $smtp;
@@ -173,6 +177,9 @@ sub usage
 	print STDERR "\t--smtp-server      smtp server [$smtp_server]\n";
 	print STDERR "\t--smtp-user        smtp SASL username\n";
 	print STDERR "\t--smtp-pass        smtp SASL password\n";
+	print STDERR "\t--smtp-starttls    asks for TLS encryption into SMTP session (incompatible with ssl)\n";
+	print STDERR "\t--smtp-ssl         start an encrypted connection to a SSL/TLS socket (incompatible with starttls)\n";
+	print STDERR "\t--smtp-tls-nover   ignore CA verification in tls peer handshake\n";
 	print STDERR "\t--test             don't send reports\n";
 	print STDERR "\t                   (implies --keepfiles --noupdate)\n";
 	print STDERR "\t--utc              operate in UTC\n";
@@ -201,6 +208,9 @@ my $opt_retval = &Getopt::Long::GetOptions ('day!' => \$daybound,
                                             'report-org=s' => \$repdom,
                                             'smtp-server=s' => \$smtp_server,
                                             'smtp-port=i' => \$smtp_port,
+                                            'smtp-ssl' => \$smtp_ssl,
+                                            'smtp-tls-nover' => \$smtp_tls_noverify,
+                                            'smtp-starttls' => \$smtp_starttls,
                                             'smtp-user=s' => \$smtp_user,
                                             'smtp-pass=s' => \$smtp_pass,
                                             'update!' => \$doupdate,
@@ -221,6 +231,12 @@ if (!$opt_retval || $helponly)
 	{
 		exit(1);
 	}
+}
+
+if ( $smtp_ssl && $smtp_starttls ) 
+{
+	usage();
+	exit(1);
 }
 
 if ($showversion)
@@ -399,15 +415,31 @@ if ($verbose)
 # 	-- update "last sent" timestamp
 #
 
+if ($smtp_tls_noverify){
+	$smtp_tls_verify=0; #SSL_VERIFY_NONE
+}
+
 $smtp = Net::SMTP->new($smtp_server,
                        'Port' => $smtp_port,
-                       'Hello' => hostfqdn());
+                       'Hello' => hostfqdn(),
+                       'SSL' => $smtp_ssl,
+                       'SSL_verify_mode' => $smtp_tls_verify);
+
 if (!defined($smtp))
 {
 	print STDERR "$progname: open SMTP server $smtp_server:$smtp_port failed\n";
 	exit(1);
 }
 
+if ( $smtp_starttls )
+{
+	# perform STARTTLS initialization
+	if (! $smtp->starttls() )
+	{
+		print STDERR "$progname: START-TLS init for $smtp_server:$smtp_port failed\n";
+		exit(1);
+	}
+}
 
 if ( defined ($smtp_user) && defined ($smtp_pass) )
 {

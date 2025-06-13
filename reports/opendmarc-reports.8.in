@@ -90,6 +90,14 @@ Causes reports to be sent by transmitting them using SMTP to the specified
 .I port.
 The default is 25.
 .TP
+.I --smtp-starttls
+Causes reports to be sent to be sent through an encrypted SMTP channel by
+issuing a STARTTLS command.
+.TP
+.I --smtp-ssl
+Causes reports to be sent to be sent through an encrypted SMTP channel by 
+connecting to a SSL/TLS socket.
+.TP
 .I --smtp-user=username
 Used with 
 .I --smtp-pass
